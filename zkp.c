@@ -37,6 +37,12 @@ commitment_t ch;
 
 int main(int argc, const char *argv[])
 {
+    // define the length
+  // mp_bitcnt_t typdef
+    unsigned long ln = 2048;
+    unsigned long le = 256;
+    unsigned long ls = 80;
+    unsigned long lr = ln + ls;
 
 
     /* for random setting */
@@ -72,7 +78,7 @@ int main(int argc, const char *argv[])
 
     setrndseed();
     gmp_randseed(state,rndseed);
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, lr);
     mpz_set(c.r,randtmp);
 
 
@@ -84,27 +90,27 @@ int main(int argc, const char *argv[])
 
     // here 128 is chosen arbitrarily 
     // @TODO need to determine the size in the future
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, le + ls);
     mpz_set(cr.v,randtmp);
 
     setrndseed();
     gmp_randseed(state,rndseed);
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, le + ls);
     mpz_set(cr.a,randtmp);
 
     setrndseed();
     gmp_randseed(state,rndseed);
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, le + ls);
     mpz_set(cr.b,randtmp);
 
     setrndseed();
     gmp_randseed(state,rndseed);
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, le + ls);
     mpz_set(cr.d,randtmp);
 
     setrndseed();
     gmp_randseed(state,rndseed);
-    mpz_rrandomb(randtmp, state, 128);
+    mpz_rrandomb(randtmp, state, lr +  le + ls);
     mpz_set(cr.r,randtmp);
 
 
@@ -170,12 +176,45 @@ int main(int argc, const char *argv[])
     mpz_t cr_value; mpz_init(cr_value);
     get_commitment(cr_value,cr);
     gmp_printf("Publishing commitment cr value: %Zd\n\n", cr_value);
+    
+
     // challenge
     // shoud be hash
     mpz_t e; mpz_init(e);
     mpz_set_ui(e,3);
     gmp_printf("Publishing hash challenge value e: %Zd\n\n", e);
 
+    // SHA1(INPUT, strlen(INPUT),output)
+    // input is char input[]
+    //output unsigned char output[]
+    // int mpz_set_str (mpz_t rop, char *str, int base)
+    // char * mpz_get_str (char *str, int base, mpz_t op)
+
+    // in order to use sha1 for cr1 and cr2
+    char * char_cr = mpz_get_str (NULL, 10, cr_value);
+    char * char_c = mpz_get_str (NULL, 10, c_value);
+
+    //mpz_mul_2exp (mpz_t rop, mpz_t op1, mp_bitcnt_t op2) left shft
+    // c left shift then cat cr
+    size_t cr_value_len =  mpz_sizeinbase(cr_value,2);
+    printf("%zd\n", cr_value_len);
+    mpz_t cr_value_hash_tmp; mpz_init(cr_value_hash_tmp);
+    static unsigned char buffer[65];
+    sha256("string", buffer);
+    printf("%s\n", buffer);
+/*
+  char input[] = "hello, world";
+  unsigned char output[20];
+
+   int i = 0;
+
+   SHA1(input,strlen(input) ,output);
+
+   for( i =0;i<20;i++)
+     printf(" %x " , output[i]);
+
+   for( i =0;i<20;i++)
+     printf(" %d " , output[i]);  */
 
     // hiding value
     mpz_init_set(ch.v,cr.v); mpz_init_set(ch.a,cr.a); mpz_init_set(ch.b,cr.b); mpz_init_set(ch.d,cr.d); mpz_init_set(ch.r,cr.r); mpz_init_set(ch.delta,cr.delta);
@@ -241,8 +280,8 @@ int main(int argc, const char *argv[])
     {
       printf("Verification Failed!!!\n");
     }
-    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
-    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
+//    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
+//    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
 
 
 
@@ -275,6 +314,7 @@ void setrndseed()
         mpz_mul_2exp(rndtmp, rndtmp, idx*8); // not clear left shift from github ajduncan/nzkp
         mpz_add(rndseed,rndseed,rndtmp);
     }
+
 }
 
 //@TODO create a function
@@ -305,7 +345,7 @@ void publish_modulus() {
   // 4r+3 except 5
   // 2p+1 p is prime
   gmp_randseed(state, rndseed);
-  mpz_rrandomb(rand, state, 512);
+  mpz_rrandomb(rand, state, 1024);
   while (1) {                          /* repeat until prime is of form 4r+3 which is a safe prime*/
     mpz_nextprime(tmpprime, rand);     
     mpz_sub_ui(tmp, tmpprime, 3);
@@ -317,7 +357,7 @@ void publish_modulus() {
   /* computes 2nd prime */
   setrndseed();
   gmp_randseed(state, rndseed);
-  mpz_rrandomb(rand, state, 512);
+  mpz_rrandomb(rand, state, 1024);
   while (1) {                    
     mpz_nextprime(tmpprime, rand);     
     mpz_sub_ui(tmp, tmpprime, 3);
@@ -409,7 +449,7 @@ void get_commitment(mpz_t commitment_value,commitment_t cm) {
 
   // set the commitment value
   mpz_set(commitment_value,tmp_result);
-  gmp_printf("DEBUG: %Zd\n\n", commitment_value);
+  //gmp_printf("DEBUG: %Zd\n\n", commitment_value);
 
   // free
   mpz_clear(tmp1);
@@ -422,6 +462,20 @@ void get_commitment(mpz_t commitment_value,commitment_t cm) {
   mpz_clear(tmp_result);
 
 
-  
+}
 
+
+void sha256(char *string, char outputBuffer[65])
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, string, strlen(string));
+    SHA256_Final(hash, &sha256);
+    int i = 0;
+    for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    {
+        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
+    }
+    outputBuffer[64] = 0;
 }
