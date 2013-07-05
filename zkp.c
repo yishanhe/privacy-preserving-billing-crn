@@ -336,15 +336,21 @@ int main(int argc, const char *argv[])
 	pairing_init_set_buf(pairing, param, count);
 	
 	// Setup field.(suported by pbc)
-	element_t g;
-	element_t h;
-	element_init_G1(g, pairing);
-	element_init_G1(h, pairing);
+	element_t g_pbc;
+	element_t h_pbc;
+	
+	element_init_G1(g_pbc, pairing);
+	element_init_G1(h_pbc, pairing);
+	element_printf("After pairing, g_pbc is %B\n\n",g_pbc);
+	element_printf("After pairing, h_pbc is %B\n\n",h_pbc);
 	element_random(g);
 	element_random(h);
 	
-
-
+    // void element_set_mpz(element_t e, mpz_t z)
+	// void element_to_mpz(mpz_t z, element_t e)
+    element_t x; element_t xo;
+	//element_init_G1
+    
     return 0;
 }
 
