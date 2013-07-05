@@ -6,7 +6,10 @@ INC=-I$(PATH1)/include/
 #LIB=$(PATH1)/lib64/libpbc.a \
 #	 $(PATH1)/lib64/libgmp.a \
 
-LIB=$(PATH1)/lib64/libgmp.a 
+LIB=$(PATH1)/lib64/libgmp.a \
+	-lssl \
+	-lcrypto \
+
 
 #LIB=-L$(PATH1)/lib64 -Wl,-rpath $(PATH1)/lib64
 

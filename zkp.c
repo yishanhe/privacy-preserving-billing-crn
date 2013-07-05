@@ -21,6 +21,8 @@ void publish_modulus();
 void get_element_rand_zn(mpz_t element);
 void get_qr_n(mpz_t qr_generator);
 void get_commitment(mpz_t commitment_value,commitment_t cm);
+void sha256(char *string, char outputBuffer[65]);
+
 
 
 
@@ -193,12 +195,29 @@ int main(int argc, const char *argv[])
     // in order to use sha1 for cr1 and cr2
     char * char_cr = mpz_get_str (NULL, 10, cr_value);
     char * char_c = mpz_get_str (NULL, 10, c_value);
+    printf("The string char_cr is %s", char_cr);
+    printf("The string char_c is %s", char_c);
 
     //mpz_mul_2exp (mpz_t rop, mpz_t op1, mp_bitcnt_t op2) left shft
     // c left shift then cat cr
-    size_t cr_value_len =  mpz_sizeinbase(cr_value,2);
-    printf("%zd\n", cr_value_len);
-    mpz_t cr_value_hash_tmp; mpz_init(cr_value_hash_tmp);
+    size_t c_value_len =  mpz_sizeinbase(c_value,2);
+    printf("%zd\n", c_value_len);
+    size_t n_len =  mpz_sizeinbase(n,2);
+    printf("The length of modulo: %zd\n", n_len);
+/* 
+    mpz_t c_value_hash_tmp; mpz_init(c_value_hash_tmp);
+    mpz_mul_2exp(c_value_hash_tmp,c_value,c_value_len);
+    mpz_t value_to_hash_tmp; mpz_init(value_to_hash_tmp);
+    mpz_add(value_to_hash_tmp,c_value_hash_tmp,cr_value);
+    size_t value_to_hash_tmp_len =  mpz_sizeinbase(value_to_hash_tmp,2);
+    printf("%zd\n", value_to_hash_tmp_len);
+    
+    
+    gmp_printf("Publishing value to hash tmp: %Zd\n\n", value_to_hash_tmp);
+    // do free here
+ */
+
+
     static unsigned char buffer[65];
     sha256("string", buffer);
     printf("%s\n", buffer);
