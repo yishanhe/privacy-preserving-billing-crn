@@ -196,10 +196,10 @@ int main(int argc, const char *argv[])
     char * char_cr = mpz_get_str (NULL, 10, cr_value);
     char * char_c = mpz_get_str (NULL, 10, c_value);
 	
-    printf("The string char_cr is %s", char_cr);
-	printf("char_cr length is %d",strlen(char_cr));
-    printf("The string char_c is %s", char_c);
-	printf("char_c length is %d",strlen(char_cr));
+    printf("The string char_cr is %s \n\n", char_cr);
+	printf("char_cr length is %zd \n\n",strlen(char_cr));
+    printf("The string char_c is %s \n\n", char_c);
+	printf("char_c length is %zd \n\n",strlen(char_c));
 
     //mpz_mul_2exp (mpz_t rop, mpz_t op1, mp_bitcnt_t op2) left shft
     // c left shift then cat cr
@@ -209,7 +209,12 @@ int main(int argc, const char *argv[])
     printf("The length of modulo: %zd\n", n_len);
 	
 	// cat char_cr & char_c
-	//strcat(); 
+    char * dest = (char *)malloc((strlen(char_cr)+strlen(char_c)+1)*sizeof(char));
+	strcat(dest,char_cr); 
+	strcat(dest,char_c); 
+
+    printf("The string dest is %s \n\n", dest);
+	printf("The new dest length is %zd \n\n", strlen(dest));
 /* 
     mpz_t c_value_hash_tmp; mpz_init(c_value_hash_tmp);
     mpz_mul_2exp(c_value_hash_tmp,c_value,c_value_len);
@@ -225,8 +230,8 @@ int main(int argc, const char *argv[])
 
 
     static unsigned char buffer[65];
-    sha256("string", buffer);
-    printf("%s\n", buffer);
+    sha256(dest, buffer);
+    printf("THE SHA256 result is %s\n\n", buffer);
 /*
   char input[] = "hello, world";
   unsigned char output[20];
