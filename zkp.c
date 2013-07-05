@@ -4,11 +4,12 @@
 #include <time.h>
 #include <string.h>
 #include <openssl/sha.h> //using to get HASH for NIKP
+#include <pbc.h>
 
 #define TRUE 1
 #define FALSE 0
 
-int fastseed = TRUE; //make it work in mac if setting to TRUE
+int fastseed = FALSE; //make it work in mac if setting to TRUE
 
 typedef struct  {
     mpz_t v;
@@ -26,9 +27,7 @@ void get_element_rand_zn(mpz_t element);
 void get_qr_n(mpz_t qr_generator);
 void get_commitment(mpz_t commitment_value,commitment_t cm);
 void sha256(char *string, char outputBuffer[65]);
-//void timestamp(FILE *out);
-
-
+void timestamp(FILE *out);
 
 
 
@@ -83,6 +82,7 @@ int main(int argc, const char *argv[])
     mpz_set_ui(c.b,3);
     mpz_set_ui(c.d,6);
 
+	// random number
     setrndseed();
     gmp_randseed(state,rndseed);
     mpz_rrandomb(randtmp, state, lr);
@@ -90,7 +90,7 @@ int main(int argc, const char *argv[])
 
 
 
-
+	// random number for cr
     setrndseed();
 
     gmp_randseed(state,rndseed);
@@ -320,7 +320,29 @@ int main(int argc, const char *argv[])
     }
 
 
-
+ 
+ 
+ 	//  pbc part
+	// commit only one value say v here.
+	
+	//initialize the pbc here.
+	pairing_t pairing;
+	
+	FILE* fparam = fopen("a.param", "rb");
+	char param[1024];
+	size_t count = fread(param, 1, 1024, fparam);
+	fclose(fparam);
+	if (!count) pbc_die("input error");
+	pairing_init_set_buf(pairing, param, count);
+	
+	// Setup field.(suported by pbc)
+	element_t g;
+	element_t h;
+	element_init_G1(g, pairing);
+	element_init_G1(h, pairing);
+	element_random(g);
+	element_random(h);
+	
 
 
     return 0;
@@ -521,4 +543,17 @@ void sha256(char *string, char outputBuffer[65])
         sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
     }
     outputBuffer[64] = 0;
+}
+
+ 
+void timestamp(FILE *out)
+{
+  struct tm *tmp;
+  time_t t;
+ 
+  t = time(NULL);
+  tmp = localtime(&t); /* or gmtime, if you want GMT^H^H^HUTC */
+  fprintf(out, "%02d.%02d.%04d %02d:%02d:%02d", 
+     tmp->tm_mday, tmp->tm_mon+1, tmp->tm_year+1900,
+     tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 }
