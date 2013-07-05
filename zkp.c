@@ -4,7 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <openssl/sha.h> //using to get HASH for NIKP
-#include <pbc.h>
+#include <pbc/pbc.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -78,6 +78,7 @@ int main(int argc, const char *argv[])
     // 4v+1 = a^2 + b^2 + d^2
     // a=2 b=3 d=6, v= 12
     mpz_set_ui(c.v,12);
+    gmp_printf("Publishing v value: %Zd\n\n", c.v);
     mpz_set_ui(c.a,2);
     mpz_set_ui(c.b,3);
     mpz_set_ui(c.d,6);
@@ -87,7 +88,7 @@ int main(int argc, const char *argv[])
     gmp_randseed(state,rndseed);
     mpz_rrandomb(randtmp, state, lr);
     mpz_set(c.r,randtmp);
-
+    gmp_printf("Publishing r value: %Zd\n\n", c.r);
 
 
 	// random number for cr
@@ -99,6 +100,7 @@ int main(int argc, const char *argv[])
     // @TODO need to determine the size in the future
     mpz_rrandomb(randtmp, state, le + ls);
     mpz_set(cr.v,randtmp);
+    gmp_printf("Publishing random v value: %Zd\n\n", cr.v);
 
     setrndseed();
     gmp_randseed(state,rndseed);
@@ -119,6 +121,7 @@ int main(int argc, const char *argv[])
     gmp_randseed(state,rndseed);
     mpz_rrandomb(randtmp, state, lr +  le + ls);
     mpz_set(cr.r,randtmp);
+    gmp_printf("Publishing random r value: %Zd\n\n", cr.r);
 
 
 
@@ -312,11 +315,11 @@ int main(int argc, const char *argv[])
 
     if(mpz_cmp(leftvalue,rightvalue)==0)
     {
-      printf("Verification Successful!!!!!!!!!!\n");
+      printf("Verification Successful!!!!!!!!!!\n\n");
     }
     else
     {
-      printf("Verification Failed!!!\n");
+      printf("Verification Failed!!!\n\n");
     }
 
 
@@ -334,6 +337,8 @@ int main(int argc, const char *argv[])
 	fclose(fparam);
 	if (!count) pbc_die("input error");
 	pairing_init_set_buf(pairing, param, count);
+    int bitlens = pairing_length_in_bytes_Zr(pairing)*8;
+    printf("%d bits to represent an element of Zr\n\n",bitlens);
 	
 	// Setup field.(suported by pbc)
 	element_t g_pbc;
@@ -341,21 +346,81 @@ int main(int argc, const char *argv[])
 	
 	element_init_G1(g_pbc, pairing);
 	element_init_G1(h_pbc, pairing);
+	element_random(g_pbc);
+	element_random(h_pbc);
+    element_printf("After pairing, h_pbc is %B\n\n",h_pbc);
 	element_printf("After pairing, g_pbc is %B\n\n",g_pbc);
-	element_printf("After pairing, h_pbc is %B\n\n",h_pbc);
-	element_random(g);
-	element_random(h);
-	
+
+    // using pbc to generate ox r1 r2 g,h
+    element_t x,ox,r1,r2;
+    element_init_Zr(x,pairing);
+    element_init_Zr(ox,pairing);
+    element_init_Zr(r1,pairing);
+    element_init_Zr(r2,pairing);
+    element_set_mpz(x,c.v);
+    element_random(ox);
+    element_random(r1);
+    element_random(r2);
+    element_printf("After pairing and rand, ox is %B\n\n",ox);
+    element_printf("After pairing and rand, r1 is %B\n\n",r1);
+    element_printf("After pairing and rand, r2 is %B\n\n",r2);
+
+
+    element_t commit_ecc_v;
+    element_init_G1(commit_ecc_v,pairing);
+    element_pow2_zn(commit_ecc_v, g_pbc, x, h_pbc , ox);
+    element_printf("g^x*h^ox is %B\n\n",commit_ecc_v);
+
+    
+    /* 
     // void element_set_mpz(element_t e, mpz_t z)
 	// void element_to_mpz(mpz_t z, element_t e)
     element_t x; element_t xo;
-	//element_init_G1
+    element_t r1; element_t r2;
+	element_init_Zr(x,pairing);
+	element_init_Zr(xo,pairing);
+	element_init_Zr(r1,pairing);
+	element_init_Zr(r2,pairing);
+    // well lets initialize those two as what we used before
+    // here we assume that x is c.v and xo is c.r
+    // and we need the same r1 r2, which is cr.v and cr.r
+    element_set_mpz(x,c.v);
+    element_set_mpz(xo,c.r);
+    element_set_mpz(r1,cr.v);
+    element_set_mpz(r2,cr.r);
+    element_printf("After pairing, x is %B\n\n",x);
+    // assign this motherfucker back and print it out to see if it is still the same
+    mpz_t testtmp; mpz_init(testtmp);
+	element_to_mpz(testtmp, x);
+    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
+    gmp_printf("The original is  %Zd\n\n", c.v);
+    
+
+
+    element_printf("After pairing, xo is %B\n\n",xo);
+	element_to_mpz(testtmp, xo);
+    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
+    gmp_printf("The original is  %Zd\n\n", c.r);
+
+
+    element_printf("After pairing, r1 is %B\n\n",r1);
+	element_to_mpz(testtmp, r1);
+    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
+    gmp_printf("The original is  %Zd\n\n", cr.v);
+
+
+    element_printf("After pairing, r2 is %B\n\n",r2);
+	element_to_mpz(testtmp, r2);
+    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
+    gmp_printf("The original is  %Zd\n\n", cr.r);
+
+    //free
+    mpz_clear(testtmp);
+
+    */
     
     return 0;
 }
-
-
-
 
 
 
