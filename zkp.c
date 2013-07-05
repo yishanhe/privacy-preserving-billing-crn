@@ -192,11 +192,14 @@ int main(int argc, const char *argv[])
     // int mpz_set_str (mpz_t rop, char *str, int base)
     // char * mpz_get_str (char *str, int base, mpz_t op)
 
-    // in order to use sha1 for cr1 and cr2
+    // in order to use sha256 for cr1 and cr2
     char * char_cr = mpz_get_str (NULL, 10, cr_value);
     char * char_c = mpz_get_str (NULL, 10, c_value);
+	
     printf("The string char_cr is %s", char_cr);
+	printf("char_cr length is %d",strlen(char_cr));
     printf("The string char_c is %s", char_c);
+	printf("char_c length is %d",strlen(char_cr));
 
     //mpz_mul_2exp (mpz_t rop, mpz_t op1, mp_bitcnt_t op2) left shft
     // c left shift then cat cr
@@ -204,6 +207,9 @@ int main(int argc, const char *argv[])
     printf("%zd\n", c_value_len);
     size_t n_len =  mpz_sizeinbase(n,2);
     printf("The length of modulo: %zd\n", n_len);
+	
+	// cat char_cr & char_c
+	//strcat(); 
 /* 
     mpz_t c_value_hash_tmp; mpz_init(c_value_hash_tmp);
     mpz_mul_2exp(c_value_hash_tmp,c_value,c_value_len);
