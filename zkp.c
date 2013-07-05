@@ -184,7 +184,7 @@ int main(int argc, const char *argv[])
     // shoud be hash
     mpz_t e; mpz_init(e);
     mpz_set_ui(e,3);
-    gmp_printf("Publishing hash challenge value e: %Zd\n\n", e);
+    gmp_printf("Publishing artificial hash challenge value e: %Zd\n\n", e);
 
     // SHA1(INPUT, strlen(INPUT),output)
     // input is char input[]
@@ -201,7 +201,6 @@ int main(int argc, const char *argv[])
     printf("The string char_c is %s \n\n", char_c);
 	printf("char_c length is %zd \n\n",strlen(char_c));
 
-    //mpz_mul_2exp (mpz_t rop, mpz_t op1, mp_bitcnt_t op2) left shft
     // c left shift then cat cr
     size_t c_value_len =  mpz_sizeinbase(c_value,2);
     printf("%zd\n", c_value_len);
@@ -232,19 +231,15 @@ int main(int argc, const char *argv[])
     static unsigned char buffer[65];
     sha256(dest, buffer);
     printf("THE SHA256 result is %s\n\n", buffer);
-/*
-  char input[] = "hello, world";
-  unsigned char output[20];
+	
+	// change this hex char in to mpz type
+	mpz_t e_sha256; mpz_init(e_sha256);
+	int test = mpz_set_str (e_sha256, buffer, 16);
+	printf("the test is %d\n\n",test);
+    gmp_printf("Publishing SHA256 challenge value e: %Zd\n\n", e_sha256);
+	
+	mpz_set(e,e)sha256);
 
-   int i = 0;
-
-   SHA1(input,strlen(input) ,output);
-
-   for( i =0;i<20;i++)
-     printf(" %x " , output[i]);
-
-   for( i =0;i<20;i++)
-     printf(" %d " , output[i]);  */
 
     // hiding value
     mpz_init_set(ch.v,cr.v); mpz_init_set(ch.a,cr.a); mpz_init_set(ch.b,cr.b); mpz_init_set(ch.d,cr.d); mpz_init_set(ch.r,cr.r); mpz_init_set(ch.delta,cr.delta);
@@ -302,6 +297,10 @@ int main(int argc, const char *argv[])
     mpz_powm_ui(rightvalue_tmp,rightvalue_tmp,1,n);
     mpz_set(rightvalue,rightvalue_tmp);
 
+//    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
+//    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
+
+
     if(mpz_cmp(leftvalue,rightvalue)==0)
     {
       printf("Verification Successful!!!!!!!!!!\n");
@@ -310,8 +309,6 @@ int main(int argc, const char *argv[])
     {
       printf("Verification Failed!!!\n");
     }
-//    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
-//    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
 
 
 
