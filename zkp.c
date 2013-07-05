@@ -5,6 +5,10 @@
 #include <string.h>
 #include <openssl/sha.h> //using to get HASH for NIKP
 
+#define TRUE 1
+#define FALSE 0
+
+int fastseed = TRUE; //make it work in mac if setting to TRUE
 
 typedef struct  {
     mpz_t v;
@@ -22,7 +26,7 @@ void get_element_rand_zn(mpz_t element);
 void get_qr_n(mpz_t qr_generator);
 void get_commitment(mpz_t commitment_value,commitment_t cm);
 void sha256(char *string, char outputBuffer[65]);
-
+//void timestamp(FILE *out);
 
 
 
@@ -49,6 +53,7 @@ int main(int argc, const char *argv[])
 
     /* for random setting */
     mpz_t randtmp; mpz_init(randtmp);
+    mpz_init(rndseed);
     // random choose r_*
     gmp_randstate_t state;     
     //@TODO need better random scheme
@@ -228,17 +233,21 @@ int main(int argc, const char *argv[])
  */
 
 
-    static unsigned char buffer[65];
+    //static unsigned char buffer[65];
+    static char buffer[65];
     sha256(dest, buffer);
     printf("THE SHA256 result is %s\n\n", buffer);
 	
 	// change this hex char in to mpz type
 	mpz_t e_sha256; mpz_init(e_sha256);
-	int test = mpz_set_str (e_sha256, buffer, 16);
-	printf("the test is %d\n\n",test);
-    gmp_printf("Publishing SHA256 challenge value e: %Zd\n\n", e_sha256);
+	if (mpz_set_str (e_sha256, buffer, 16)==0){
+        gmp_printf("Publishing SHA256 challenge value e: %Zd\n\n", e_sha256);
+	    mpz_set(e,e_sha256);
+    }
+    else{
+        printf("Generate SHA256 failed, using artificial e instead! \n\n");
+    }
 	
-	mpz_set(e,e)sha256);
 
 
     // hiding value
@@ -297,8 +306,8 @@ int main(int argc, const char *argv[])
     mpz_powm_ui(rightvalue_tmp,rightvalue_tmp,1,n);
     mpz_set(rightvalue,rightvalue_tmp);
 
-//    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
-//    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
+    gmp_printf("Publishing leftvalue: %Zd\n\n",leftvalue);
+    gmp_printf("Publishing rightvalue: %Zd\n\n",rightvalue);
 
 
     if(mpz_cmp(leftvalue,rightvalue)==0)
@@ -328,8 +337,8 @@ void setrndseed()
     mpz_t rndtmp;
     unsigned long int idx;
     time_t t1;
-
-    mpz_init(rndtmp);
+    if (!fastseed) {
+     mpz_init(rndtmp);
 
     rnd = fopen("/dev/urandom","r"); //must run in a linux machine
 
@@ -340,8 +349,15 @@ void setrndseed()
         mpz_set_ui(rndtmp, (unsigned long int) getc(rnd));
         mpz_mul_2exp(rndtmp, rndtmp, idx*8); // not clear left shift from github ajduncan/nzkp
         mpz_add(rndseed,rndseed,rndtmp);
+        }
+    fclose(rnd);
+    mpz_clear(rndtmp);
     }
-
+    else {
+        mpz_set_ui(rndseed, (unsigned long int) time(&t1));
+    //    mpz_mul_ui(rndseed, rndseed, (unsigned long int) getpid()); 
+      //  mpz_mul_ui(rndseed, rndseed, (unsigned long int) getppid());
+    }
 }
 
 //@TODO create a function
