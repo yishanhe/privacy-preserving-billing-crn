@@ -383,12 +383,45 @@ int main(int argc, const char *argv[])
 	element_t hash_value; 
 	element_init_Zr(hash_value, pairing);
 	element_random(hash_value);
-	element_printf("Publishing fake hash value %B\n\n",hash_value;
+	element_printf("Publishing fake hash value %B\n\n",hash_value);
 	// implement this using sha256 later
     
-
-    
+    element_t x_hiding;
+	element_t ox_hiding;	
+	element_init_Zr(x_hiding,pairing);
+	element_init_Zr(ox_hiding,pairing);
+	element_mul(x_hiding,hash_value,x);
+	element_add(x_hiding,x_hiding,r1);
+	element_mul(ox_hiding,hash_value,ox);
+	element_add(ox_hiding,ox_hiding,r2);
+	
+	element_printf("Publishing x hiding value %B\n\n",x_hiding);
+	element_printf("Publishing ox hiding value %B\n\n",ox_hiding);
+	
+	element_t ecc_leftvalue; 
+	element_t ecc_rightvalue;
+	element_init_G1(ecc_leftvalue,pairing);
+    element_init_G1(ecc_rightvalue,pairing);
+	element_pow2_zn(ecc_leftvalue,g_pbc,x_hiding,h_pbc,ox_hiding);
+	element_t ecc_one; element_init_Zr(ecc_one,pairing);
+	element_set1(ecc_one);
+	element_pow2_zn(ecc_rightvalue,commit_ecc_v,hash_value,commit_ecc_r,ecc_one);
+	
+	element_printf("Publishing ecc left value %B\n\n",ecc_leftvalue);
+	element_printf("Publishing ecc right value %B\n\n",ecc_rightvalue);
+	
+	// compare
+	if (element_cmp(ecc_leftvalue,ecc_rightvalue)==0)
+	{
+		printf("ECC commit successful!!\n\n");
+	}
+	else
+	{
+		printf("ECC commit failed!!!\n\n");
+	}
+			
     return 0;
+
 }
 
 
