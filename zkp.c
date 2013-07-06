@@ -366,58 +366,27 @@ int main(int argc, const char *argv[])
     element_printf("After pairing and rand, r2 is %B\n\n",r2);
 
 
+	// commit x
     element_t commit_ecc_v;
     element_init_G1(commit_ecc_v,pairing);
     element_pow2_zn(commit_ecc_v, g_pbc, x, h_pbc , ox);
     element_printf("g^x*h^ox is %B\n\n",commit_ecc_v);
-
-    
-    /* 
-    // void element_set_mpz(element_t e, mpz_t z)
-	// void element_to_mpz(mpz_t z, element_t e)
-    element_t x; element_t xo;
-    element_t r1; element_t r2;
-	element_init_Zr(x,pairing);
-	element_init_Zr(xo,pairing);
-	element_init_Zr(r1,pairing);
-	element_init_Zr(r2,pairing);
-    // well lets initialize those two as what we used before
-    // here we assume that x is c.v and xo is c.r
-    // and we need the same r1 r2, which is cr.v and cr.r
-    element_set_mpz(x,c.v);
-    element_set_mpz(xo,c.r);
-    element_set_mpz(r1,cr.v);
-    element_set_mpz(r2,cr.r);
-    element_printf("After pairing, x is %B\n\n",x);
-    // assign this motherfucker back and print it out to see if it is still the same
-    mpz_t testtmp; mpz_init(testtmp);
-	element_to_mpz(testtmp, x);
-    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
-    gmp_printf("The original is  %Zd\n\n", c.v);
+	
+	// commit r
+    element_t commit_ecc_r;
+    element_init_G1(commit_ecc_r,pairing);
+    element_pow2_zn(commit_ecc_r, g_pbc, r1, h_pbc , r2);
+    element_printf("g^r1*h^r2 is %B\n\n",commit_ecc_r);
+	
+	
+	// here the challenge is the e=hash(CxC'xR1R2)
+	element_t hash_value; 
+	element_init_Zr(hash_value, pairing);
+	element_random(hash_value);
+	element_printf("Publishing fake hash value %B\n\n",hash_value;
+	// implement this using sha256 later
     
 
-
-    element_printf("After pairing, xo is %B\n\n",xo);
-	element_to_mpz(testtmp, xo);
-    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
-    gmp_printf("The original is  %Zd\n\n", c.r);
-
-
-    element_printf("After pairing, r1 is %B\n\n",r1);
-	element_to_mpz(testtmp, r1);
-    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
-    gmp_printf("The original is  %Zd\n\n", cr.v);
-
-
-    element_printf("After pairing, r2 is %B\n\n",r2);
-	element_to_mpz(testtmp, r2);
-    gmp_printf("After assigned back to mpz: %Zd\n\n", testtmp);
-    gmp_printf("The original is  %Zd\n\n", cr.r);
-
-    //free
-    mpz_clear(testtmp);
-
-    */
     
     return 0;
 }
