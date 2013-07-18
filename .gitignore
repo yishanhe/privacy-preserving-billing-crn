@@ -17,4 +17,6 @@
 *.app
 demo
 
+.DS_Store
+
 

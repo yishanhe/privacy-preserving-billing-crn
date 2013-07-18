@@ -23,10 +23,10 @@ LIB=-lpbc \
 # set environment optiom
 CC = gcc
 CFLAGS=-g -Wall
-TARGET=demo
+TARGET=test
 
 
-SOURCE=zkp.c 
+SOURCE=test.c pu.c su.c util.c 
 OBJS=$(addsuffix .o, $(basename $(SOURCE)))
 
 
