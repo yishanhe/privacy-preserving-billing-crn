@@ -4,42 +4,81 @@
 #include "util.h"
 
 
-
-/*
-typedef struct {
-	pairing_ptr pairing;
-	element_t p;
-	element_t f1;
-	element_t f2;
-	element_t R1;
-	element_t R2;
-	element_t x1; // f1的hiding value
-	element_t x2;
-	element_t x3;
-	element_t challenge;
-	pbc_commitment1_t * cp;
-	pbc_commitment1_t * cf1;
-	pbc_commitment1_t * cf2;
-	int len;
-} proof_product_t;
-*/
 void su_product_proof(proof_product_t * proof_product){
 	// R1
-	element_pow2_zn(proof_product->R1,proof_product->cp->g,proof_product->cf1->random_value,proof_product->cp->h,proof_product->cf2->random_value);
+	element_pow2_zn(proof_product->R1,proof_product->cp->g,proof_product->r1,proof_product->cp->h,proof_product->r2);
 	
 	// R2
-	element_pow2_zn(proof_product->R2,proof_product->cf2->commitment_value,proof_product->cf1->random_value,proof_product->cp->h,proof_product->cp->random_value);
-		
-	// x_2
+	element_pow2_zn(proof_product->R2,proof_product->cf2->commitment_value,proof_product->r1,proof_product->cp->h,proof_product->r3);
+	// x1
+	element_mul(proof_product->x1, proof_product->f1, proof_product->challenge);
+	element_add(proof_product->x1, proof_product->x1, proof_product->r1);
+	// x2
 	element_mul(proof_product->x2,proof_product->challenge,proof_product->cf1->opening_value);
-	element_add(proof_product->x2,proof_product->x2,proof_product->cf2->random_value);
-	// x_3
+	element_add(proof_product->x2,proof_product->x2,proof_product->r2);
+	// x3
 	element_mul(proof_product->x3,proof_product->cf2->opening_value,proof_product->f1);
 	element_sub(proof_product->x3,proof_product->cp->opening_value,proof_product->x3);
 	element_mul(proof_product->x3,proof_product->challenge,proof_product->x3);
-	element_mul(proof_product->x3,proof_product->cp->random_value,proof_product->x3);
+	element_add(proof_product->x3,proof_product->r3,proof_product->x3);
 }
 
+
+/*
+void su_product_proof(proof_product_t * proof_product){
+	//D1
+	element_pow2_zn(proof_product->D1,proof_product->cp->g,proof_product->cf1->opening_value,proof_product->cp->h,proof_product->cf1->random_opening_value);
+	//D2
+	element_pow2_zn(proof_product->D2,proof_product->cp->g,proof_product->cf2->opening_value,proof_product->cp->h,proof_product->cf2->random_opening_value);
+	//D3
+	element_pow2_zn(proof_product->D3,proof_product->cf1->commitment_value,proof_product->cf2->opening_value,proof_product->cp->h,proof_product->cp->random_opening_value);	
+	
+
+	//v3
+	element_mul(proof_product->v3,proof_product->f2,proof_product->cf1->random_value);
+	element_sub(proof_product->v3,proof_product->cp->random_value,proof_product->v3);
+	element_mul(proof_product->v3,proof_product->challenge,proof_product->v3);
+	element_add(proof_product->v3,proof_product->cp->random_opening_value,proof_product->v3);
+		
+
+}
+*/
+
+/*
+void su_product_proof_prepare(proof_product_t * proof_product, cl_pk_t * pu_pk,pbc_commitment1_t * cp,pbc_commitment1_t * cf1,pbc_commitment1_t * cf2){
+	proof_product->cp=cp;
+	proof_product->cf1=cf1;
+	proof_product->cf2=cf2;
+	proof_product->pairing = pu_pk->pairing;
+	//int i;
+	//int l = 2;
+	element_init_Zr(proof_product->p,pu_pk->pairing);
+	element_init_Zr(proof_product->f1,pu_pk->pairing);
+	element_init_Zr(proof_product->f2,pu_pk->pairing);
+	element_init_Zr(proof_product->challenge,pu_pk->pairing);
+	element_init_Zr(proof_product->v1,pu_pk->pairing);
+	element_init_Zr(proof_product->v2,pu_pk->pairing);
+	element_init_Zr(proof_product->u1,pu_pk->pairing);
+	element_init_Zr(proof_product->u2,pu_pk->pairing);
+	element_init_Zr(proof_product->v3,pu_pk->pairing);
+	element_init_G1(proof_product->D1,pu_pk->pairing);
+	element_init_G1(proof_product->D2,pu_pk->pairing);
+	element_init_G1(proof_product->D3,pu_pk->pairing);
+	//
+	element_set(proof_product->p,cp->value);
+	//element_printf("test %B\n\n",cp->value);
+	element_set(proof_product->f1,cf1->value);
+	//element_printf("test %B\n\n",cf1->value);
+	element_set(proof_product->f2,cf2->value);
+	//element_printf("test %B\n\n",cf2->value);
+	//element_set(proof_product->x1,cf1->hiding_value);
+	element_set(proof_product->u1,cf1->hiding_value);
+	element_set(proof_product->u2,cf2->hiding_value);
+	element_set(proof_product->v1,cf1->hiding_opening_value);
+	element_set(proof_product->v2,cf2->hiding_opening_value);
+	element_set(proof_product->challenge,cp->challenge);
+}
+*/
 
 void su_product_proof_prepare(proof_product_t * proof_product, cl_pk_t * pu_pk,pbc_commitment1_t * cp,pbc_commitment1_t * cf1,pbc_commitment1_t * cf2){
 	proof_product->cp=cp;
@@ -55,14 +94,20 @@ void su_product_proof_prepare(proof_product_t * proof_product, cl_pk_t * pu_pk,p
 	element_init_Zr(proof_product->x1,pu_pk->pairing);
 	element_init_Zr(proof_product->x2,pu_pk->pairing);
 	element_init_Zr(proof_product->x3,pu_pk->pairing);
+	element_init_Zr(proof_product->r1,pu_pk->pairing);
+	element_init_Zr(proof_product->r2,pu_pk->pairing);
+	element_init_Zr(proof_product->r3,pu_pk->pairing);
 	element_init_G1(proof_product->R1,pu_pk->pairing);
 	element_init_G1(proof_product->R2,pu_pk->pairing);
 	//
 	element_set(proof_product->p,cp->value);
 	element_set(proof_product->f1,cf1->value);
 	element_set(proof_product->f2,cf2->value);
-	element_set(proof_product->x1,cf1->hiding_value);
+//	element_set(proof_product->x1,cf1->hiding_value);
 	element_set(proof_product->challenge,cp->challenge);
+	element_random(proof_product->r1);
+	element_random(proof_product->r2);
+	element_random(proof_product->r3);
 }
 /*
 typedef struct {
@@ -599,8 +644,8 @@ void su_pbc_commit1_prepare(pbc_commitment1_t *c, pairing_ptr pairing, element_t
 	element_random(c->random_value);
     element_random(c->opening_value);
     element_random(c->random_opening_value);
-    element_random(c->challenge); // random challenge, test for real challenge generator later
-   
+   // element_random(c->challenge); // random challenge, test for real challenge generator later
+    element_set_si(c->challenge,3);
 	// set hiding value xh = x*e + xr
 	element_mul(c->hiding_value,c->challenge,c->value);
 	element_add(c->hiding_value,c->hiding_value,c->random_value);

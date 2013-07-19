@@ -2,6 +2,100 @@
 #include <pbc/pbc_test.h>
 #include <gmp.h>
 #include "util.h"
+/*
+typedef struct  {
+	pairing_ptr pairing;
+	element_t value;
+	element_t random_value;
+	element_t opening_value;
+	element_t random_opening_value;
+	element_t hiding_value;
+	element_t hiding_opening_value;
+	element_t challenge;
+	element_t g;
+	element_t h;
+	element_t commitment_value;	
+	element_t commitment_random_value;
+	element_t commitment_hiding_value_left;	
+	element_t commitment_hiding_value_right;
+} pbc_commitment1_t; // commitment strcuture for interval checking
+	
+*/
+// @TODO total_fee_verify
+int pu_sum_fee_verify(pbc_commitment1_t * c_fee1,pbc_commitment1_t * c_fee2,pbc_commitment1_t * sum_fee){
+    int result=1;
+	element_t left; element_init_G1(left,sum_fee->pairing);
+	
+	element_mul(left,c_fee1->commitment_value,c_fee2->commitment_value);
+	
+    // verify
+    if (element_cmp(left,sum_fee->commitment_value)){
+        result = 0;
+		goto end;
+    }
+	
+	end: 
+	element_clear(left);
+	return result;
+}
+
+/*
+int pu_product_proof_verify(proof_product_t * proof_product){
+	element_t left;
+	element_t right;
+	int result=1;
+	element_init_G1(left,proof_product->pairing);
+	element_init_G1(right,proof_product->pairing);
+	
+	//1
+	element_printf("g %B\n\n",proof_product->cp->g);	
+	element_printf("u1 %B\n\n",proof_product->u1);	
+	element_printf("h %B\n\n",proof_product->cp->h);	
+	element_printf("v1 %B\n\n",proof_product->v1);	
+	element_pow2_zn(left,proof_product->cp->g,proof_product->u1,proof_product->cp->h,proof_product->v1);
+	element_pow_zn(right,proof_product->cf1->commitment_value,proof_product->challenge);
+	element_mul(right,right,proof_product->D1);	
+	element_printf("right %B\n\n",right);
+	element_printf("left %B\n\n",left);
+	
+	element_printf("challenge %B\n\n",proof_product->challenge);
+	element_printf("u1 %B\n\n",proof_product->u1);
+	element_printf("v1 %B\n\n",proof_product->v1);
+	element_printf("u2 %B\n\n",proof_product->u2);
+	element_printf("v2 %B\n\n",proof_product->v2);
+	if (element_cmp(left, right)!=0) {
+		printf("fail 1\n\n");
+		result = 0;
+	//	goto end;
+	}
+	//2
+	element_pow2_zn(left,proof_product->cp->g,proof_product->u2,proof_product->cp->h,proof_product->v2);
+	element_pow_zn(right,proof_product->cf2->commitment_value,proof_product->challenge);
+	element_mul(right,right,proof_product->D2);	
+	element_printf("right %B\n\n",right);
+	element_printf("left %B\n\n",left);
+	if (element_cmp(left, right)!=0) {
+		printf("fail 2\n\n");
+		result = 0;
+	//	goto end;
+	}
+	//3
+	element_pow2_zn(left, proof_product->cf1->commitment_value, proof_product->u2, proof_product->cp->h, proof_product->v3);
+	element_pow_zn(right, proof_product->cp->commitment_value, proof_product->challenge);
+	element_mul(right, right, proof_product->D3);
+	if (element_cmp(left, right)!=0) {
+		printf("fail 3\n\n");
+		result = 0;
+	//	goto end;
+	}
+
+
+	end:
+	element_clear(left);	
+	element_clear(right);	
+	return result;
+}
+*/
 
 int pu_product_proof_verify(proof_product_t * proof_product){
 	element_t left;
@@ -12,7 +106,10 @@ int pu_product_proof_verify(proof_product_t * proof_product){
 	element_pow2_zn(left,proof_product->cp->g,proof_product->x1,proof_product->cp->h,proof_product->x2);
 	element_pow_zn(right,proof_product->cf1->commitment_value,proof_product->challenge);
 	element_mul(right,right,proof_product->R1);	
-	if (element_cmp(left, right)) {
+	element_printf("right %B\n\n",right);
+	element_printf("left %B\n\n",left);
+	if (element_cmp(left, right)!=0) {
+		printf("fail 1\n\n");
 		result = 0;
 		goto end;
 	}
@@ -20,11 +117,18 @@ int pu_product_proof_verify(proof_product_t * proof_product){
 	element_pow2_zn(left, proof_product->cf2->commitment_value, proof_product->x1, proof_product->cp->h, proof_product->x3);
 	element_pow_zn(right, proof_product->cp->commitment_value, proof_product->challenge);
 	element_mul(right, right, proof_product->R2);
-	result = !element_cmp(left, right);
-	
+
+	result =!element_cmp(left, right);
+	if (result==0){
+		printf("FAILLLLLLLLED 2\n\n");
+		element_printf("right %B\n\n",right);
+		element_printf("left %B\n\n",left);
+	}
+
 	end:
 	element_clear(left);	
 	element_clear(right);	
+	return result;
 }
 
 int pu_cl_blind_sig_verify(proof_knowledge_signature_t * proof, cl_pk_t * pu_pk){

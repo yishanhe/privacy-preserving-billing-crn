@@ -16,6 +16,7 @@
 *.out
 *.app
 demo
+test
 
 .DS_Store
 

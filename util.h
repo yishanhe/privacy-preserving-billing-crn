@@ -71,6 +71,30 @@ typedef struct {
 	element_t Vr; //R_Vq 
 } proof_knowledge_signature_t;
 
+/*
+typedef struct {
+	pairing_ptr pairing;
+	element_t p;
+	element_t f1;
+	element_t f2;
+//	element_t R1;
+//	element_t R2;
+	element_t D1; // f1的hiding value
+	element_t D2; // d1 d2 d3
+	element_t D3;
+	element_t u1;
+	element_t u2;
+	element_t v1;
+	element_t v2;
+	element_t v3;
+	element_t challenge;
+	pbc_commitment1_t * cp;
+	pbc_commitment1_t * cf1;
+	pbc_commitment1_t * cf2;
+	int len;
+} proof_product_t;
+*/
+
 typedef struct {
 	pairing_ptr pairing;
 	element_t p;
@@ -81,6 +105,9 @@ typedef struct {
 	element_t x1; // f1的hiding value
 	element_t x2;
 	element_t x3;
+	element_t r1;
+	element_t r2;
+	element_t r3;
 	element_t challenge;
 	pbc_commitment1_t * cp;
 	pbc_commitment1_t * cf1;
@@ -154,6 +181,7 @@ void pu_cl_sig_sign_prepare(cl_signature_t * pu_sig, pairing_ptr pairing,int mes
 void pu_cl_sig_sign(cl_pk_t * pu_pk, cl_sk_t * pu_sk,cl_signature_t * pu_sig, element_t message[],int message_len);
 int pu_cl_blind_sig_verify(proof_knowledge_signature_t * proof, cl_pk_t * pu_pk);
 int pu_product_proof_verify(proof_product_t * proof_product);
+int pu_sum_fee_verify(pbc_commitment1_t * c_fee1,pbc_commitment1_t * c_fee2,pbc_commitment1_t * sum_fee);
 #endif
 
 

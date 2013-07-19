@@ -19,8 +19,10 @@ int main (int argc, char const *argv[])
 	mpz_t n; mpz_init(n);
 	mpz_t prime1; mpz_init(prime1);
 	mpz_t prime2; mpz_init(prime2);
+	double t0=pbc_get_time();
 	publish_modulus(n, prime1, prime2);
-		
+	double t1=pbc_get_time();
+	printf("Pre-stage: Publish primes and modulos. %lf ms\n\n",(t1-t0)*1000.0);	
 	// load parameters
 	pairing_t pairing;
 	
@@ -31,39 +33,45 @@ int main (int argc, char const *argv[])
 	if (!count) pbc_die("input error");
 	pairing_init_set_buf(pairing, param, count);
 	
+	int message_len = 3;
+	//@TODO publish g h and maybe the hash 
 	
-	/******************** sign policy ****************************************/
+	/******************** sign policy 1****************************************/
 	
 	// test CL signature
+	printf("Stage1: PU sign the policy with CL singature\n\n");
 	
-	element_t message[3];
-	element_init_Zr(message[0],pairing); element_set_si(message[0], 0); // 0-12:00
-	element_init_Zr(message[1],pairing); element_set_si(message[1], 720); //
-	element_init_Zr(message[2],pairing); element_set_si(message[2], 5);
-	int message_len = 3;
-	element_t z[message_len-1];
-	element_t Z[message_len-1];
+	element_t policy_tuple[3];
+	element_init_Zr(policy_tuple[0],pairing); element_set_si(policy_tuple[0], 0); // 0-12:00
+	element_init_Zr(policy_tuple[1],pairing); element_set_si(policy_tuple[1], 720); //
+	element_init_Zr(policy_tuple[2],pairing); element_set_si(policy_tuple[2], 5);
+	int policy_tuple_len = 3;
+	element_t z[policy_tuple_len-1];
+	element_t Z[policy_tuple_len-1];
 	cl_pk_t pu_pk;
 	cl_sk_t pu_sk;
-	pu_cl_key_gen (&pu_pk, &pu_sk, message,message_len, pairing, z,Z); 
-
+	t0=pbc_get_time();
+	pu_cl_key_gen (&pu_pk, &pu_sk, policy_tuple,policy_tuple_len, pairing, z,Z); 
+	t1=pbc_get_time();
+	printf("1.1 PU generates the keys %lf ms \n\n",(t1-t0)*1000.0);
 	
 	cl_signature_t pu_sig;
-	element_t A[message_len-1];
-	element_t B[message_len-1];
-	pu_cl_sig_sign_prepare(&pu_sig, pairing,message_len, A,B);
+	element_t A[policy_tuple_len-1];
+	element_t B[policy_tuple_len-1];
+	pu_cl_sig_sign_prepare(&pu_sig, pairing,policy_tuple_len, A,B);
 
 		
-	double t0=pbc_get_time();
-	pu_cl_sig_sign(&pu_pk, &pu_sk,&pu_sig, message,message_len);
-	double t1=pbc_get_time();
-	printf("Sign a single policy time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	t0=pbc_get_time();
+	pu_cl_sig_sign(&pu_pk, &pu_sk,&pu_sig, policy_tuple,policy_tuple_len);
+	t1=pbc_get_time();
+	printf("1.2 PU signs a single policy %lf ms \n\n",(t1-t0)*1000.0);
 	
 	t0=pbc_get_time();
-	int  bool_su_cl_sig_verify = su_cl_sig_verify(&pu_pk, &pu_sk,&pu_sig,message);
+	int  bool_su_cl_sig_verify = su_cl_sig_verify(&pu_pk, &pu_sk,&pu_sig,policy_tuple);
 	t1=pbc_get_time();
-	printf("Verify a single policy time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("1.3 SU verifies a single policy %lf ms \n\n",(t1-t0)*1000.0);
 			
+	
 	if (bool_su_cl_sig_verify)
 	{
 		printf("policy signature verify successful!!\n\n");
@@ -72,20 +80,12 @@ int main (int argc, char const *argv[])
 	{
 		printf("policy signature verify failed!!!\n\n");
 	}
+	
 
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+	printf("Stage2: SU makes pbc commits towards its consumption tuple\n\n");
 	
 	
 	
@@ -95,7 +95,8 @@ int main (int argc, char const *argv[])
 	pbc_commitment1_t c_delta_t1;
 	pbc_commitment1_t c_fee1;
 	pbc_commitment1_t c_fee2;
-	pbc_commitment1_t c_fee3;
+	pbc_commitment1_t unit_price;
+	pbc_commitment1_t sum_fee;
 	
 	
 	element_t value1;element_init_Zr(value1,pairing);
@@ -103,41 +104,68 @@ int main (int argc, char const *argv[])
 	element_t value3;element_init_Zr(value3,pairing);
 	element_t value4;element_init_Zr(value4,pairing);
 	element_t value5;element_init_Zr(value5,pairing);
+	element_t value6;element_init_Zr(value6,pairing);
 	
 	element_set_si(value1,480); //08:00
-	element_set_si(value2,700); // 1000 mins
-	element_set_si(value3,1100); // fee1
-	element_set_si(value4,5000); // fee2
-	element_set_si(value5,6100); // fee3 is the total fee
+	element_set_si(value2,3); // 1000 mins
+	element_set_si(value3,15); // fee1
+	element_set_si(value4,24); // fee2
+	element_set_si(value5,39); // sum_fee is the total fee
+	element_set_si(value6,5); // unit price is the total fee
 	
 	su_pbc_commit1_prepare(&c_t1,(pairing_ptr)pairing,value1);
 	su_pbc_commit1_prepare(&c_delta_t1,(pairing_ptr)pairing,value2);
 	su_pbc_commit1_prepare(&c_fee1,(pairing_ptr)pairing,value3);
 	su_pbc_commit1_prepare(&c_fee2,(pairing_ptr)pairing,value4);
-	su_pbc_commit1_prepare(&c_fee3,(pairing_ptr)pairing,value5);
-  	/*
-	element_printf("Publishing  value : %B \n\n",c_t1.value);
-  	element_printf("Publishing random value : %B \n\n",c_t1.random_value);
-  	element_printf("Publishing opening value : %B \n\n",c_t1.opening_value);
-  	element_printf("Publishing random opening value : %B \n\n",c_t1.random_opening_value);
-  	element_printf("Publishing g  value : %B \n\n",c_t1.g);
-  	element_printf("Publishing h  value : %B \n\n",c_t1.h);
+	su_pbc_commit1_prepare(&sum_fee,(pairing_ptr)pairing,value5);
+	su_pbc_commit1_prepare(&unit_price,(pairing_ptr)pairing,value6);
+	
+	
+	//@TODO manuly set the same g h and challenge for late the product
+	
+	//element_set(c_delta_t1.challenge, c_t1.challenge);
+	element_set(c_delta_t1.g, c_t1.g);
+	element_set(c_delta_t1.h, c_t1.h);
+	//element_set(c_fee1.challenge, c_t1.challenge);
+	element_set(c_fee1.g, c_t1.g);
+	element_set(c_fee1.h, c_t1.h);
+	//element_set(c_fee2.challenge, c_t1.challenge);
+	element_set(c_fee2.g, c_t1.g);
+	element_set(c_fee2.h, c_t1.h);
+	//element_set(sum_fee.challenge, c_t1.challenge);
+	element_set(sum_fee.g, c_t1.g);
+	element_set(sum_fee.h, c_t1.h);
+	//element_set(unit_price.challenge, c_t1.challenge);
+	element_set(unit_price.g, c_t1.g);
+	element_set(unit_price.h, c_t1.h);
+	
+	// for total fee verification
+	element_add(sum_fee.opening_value,c_fee1.opening_value,c_fee2.opening_value);
+	element_mul(sum_fee.hiding_opening_value,sum_fee.challenge,sum_fee.opening_value);
+	element_add(sum_fee.hiding_opening_value,sum_fee.hiding_opening_value,sum_fee.random_opening_value);
+	
+	/*
+	element_printf("gh %B\n\n",c_delta_t1.g);
+	element_printf("gh %B\n\n",c_fee1.g);
+	element_printf("gh %B\n\n",c_fee2.g);
+	element_printf("gh %B\n\n",sum_fee.g);
+	element_printf("gh %B\n\n",unit_price.g);
 	*/
-
 	
 	t0=pbc_get_time();
     pbc_commit1(&c_t1);
     pbc_commit1(&c_delta_t1);
 	pbc_commit1(&c_fee1);
 	t1=pbc_get_time();
-	printf("Commit a tuple of [t,delta_t,fee]_i time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("2.1 Integer commit a tuple of [t,delta_t,fee]_i (three commitments) %lf ms \n\n",(t1-t0)*1000.0);
 	
 	pbc_commit1(&c_fee2);
+	pbc_commit1(&unit_price);
 	
 	t0=pbc_get_time();
-	pbc_commit1(&c_fee3); 
+	pbc_commit1(&sum_fee); 
 	t1=pbc_get_time();
-	printf("Commit total fee time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("2.2 Integer commit total fee time consume(single commitments) %lf ms \n\n",(t1-t0)*1000.0);
  
 	
 
@@ -146,18 +174,18 @@ int main (int argc, char const *argv[])
 	int bool_pbc_commit_delta_t1 = pu_pbc_commit1_verify(c_delta_t1);
 	int bool_pbc_commit_fee1 = pu_pbc_commit1_verify(c_fee1);
 	t1=pbc_get_time();
-	printf("Verify a tuple of commmitment[t,delta_t,fee]_i time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("2.3 Verify a tuple of commmitment[t,delta_t,fee]_i %lf ms \n\n",(t1-t0)*1000.0);
 	
 	t0=pbc_get_time();
-	int bool_pbc_commit_fee3 = pu_pbc_commit1_verify(c_fee3);
+	int bool_pbc_commit_sum_fee = pu_pbc_commit1_verify(sum_fee);
 	t1=pbc_get_time();
-	printf("Verify a total fee time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("2.4 Verify a total fee %lf ms \n\n",(t1-t0)*1000.0);
 	
 	
 	// test pu.c
 	// verify the pbc commitment
 	//&&bool_pbc_commit_fee3
-	if (bool_pbc_commit_t1&&bool_pbc_commit_delta_t1&&bool_pbc_commit_fee1)
+	if (bool_pbc_commit_t1&&bool_pbc_commit_delta_t1&&bool_pbc_commit_fee1&&bool_pbc_commit_sum_fee)
 	{
 		printf("policy verify successful!!\n\n");
 	}
@@ -167,24 +195,23 @@ int main (int argc, char const *argv[])
 	}
 		
 		
+		
 	
+	/*************************************************************************/
+	/******************************* bound checking ***************************/
+	/*************************************************************************/
+	printf("Stage3: SU makes integer commits and prove the interval checking\n\n");
 	
-
-	
-	// test su.c
-	// leftbound
-	//double ictime=0; //interval checking time
-	//t0=pbc_get_time();
+    //left bound
 	mpz_t v;
 	mpz_init_set_si(v,480);
-	//gmp_printf("Publishing integer for decomposition v(%zd bit): %Zd \n\n", mpz_sizeinbase(v,2),v);
+	
 	if(mpz_sgn(v)==-1){
 		pbc_die("integer for decompostion is negetive!");
 	}
-	//mpz_t p;mpz_init(p);
-	
-	//mpz_set(p,integer_for_decomposition);
-	//gmp_printf(" %Zd \n\n", mpz_sizeinbase(p,2),p);
+
+
+	t0=pbc_get_time();
 	mpz_t a; mpz_init(a);
 	mpz_t b; mpz_init(b);
 	mpz_t d; mpz_init(d);
@@ -194,17 +221,11 @@ int main (int argc, char const *argv[])
     mpz_mul_si(ptmp,v,4);
   	mpz_add(p,ptmp,p);
 	sum_of_squares(a,b,d,p);
-//	t1=pbc_get_time();
-//	ictime+=(t1-t0);
+	t1=pbc_get_time();
+	printf("3.1 SU decomposites the value to sum of three squares %lf ms \n\n",(t1-t0)*1000.0);
   
- // 	gmp_printf("Publishing value v(%zd bit): %Zd \n\n", mpz_sizeinbase(p,2),p);
-  //	gmp_printf("Publishing value a(%zd bit): %Zd\n\n", mpz_sizeinbase(a,2),a);
- // 	gmp_printf("Publishing value b(%zd bit): %Zd\n\n", mpz_sizeinbase(b,2),b);
- //   gmp_printf("Publishing value d(%zd bit): %Zd\n\n", mpz_sizeinbase(d,2),d);
 	
- //   printf("The decomposition of sum of three squares TEST PASS !!!!!!!!\n\n");
-	
-	// test integer commitment
+	//integer commitment
 	integer_commitment_t c2;
     mpz_t value[7];
     mpz_t random_value[7];
@@ -214,26 +235,18 @@ int main (int argc, char const *argv[])
 	
 	// prepare
 	su_integer_commit6_prepare(&c2, value, random_value, hiding_value, generator,v,a,b,d);
-//	printf("The su_integer_commit6_prepare TEST PASS !!!!!!!!\n\n");
 	
 	t0=pbc_get_time();
 	su_integer_commit6(&c2);
 	t1=pbc_get_time();
-	printf("Generate an integer commitment(double commit) time consume is %lf ms \n\n",(t1-t0)*1000.0);
- //   gmp_printf("Publishing ommitment values(%zd bit): %Zd\n\n", mpz_sizeinbase(c2.v_commitment_value,2),c2.v_commitment_value);
-//	gmp_printf("Publishing ommitment values(%zd bit): %Zd\n\n", mpz_sizeinbase(c2.v_commitment_random_value,2),c2.v_commitment_random_value);
-//    gmp_printf("Publishing ommitment values(%zd bit): %Zd\n\n", mpz_sizeinbase(c2.integer_commitment_value,2),c2.integer_commitment_value);
-//	gmp_printf("Publishing ommitment values(%zd bit): %Zd\n\n", mpz_sizeinbase(c2.integer_commitment_random_value,2),c2.integer_commitment_random_value);
-	
-//    printf("The su_integer_commit6 TEST PASS !!!!!!!!\n\n");
+	printf("3.2 SU generates an integer commitment(double commit) %lf ms \n\n",(t1-t0)*1000.0);
+
 	
 	t0=pbc_get_time();
 	int bool_integer_commit6 = pu_integer_commit6_verify (&c2);
 	t1=pbc_get_time();
-	printf("Verify an integer commitment(double commit) time consume is %lf ms \n\n",(t1-t0)*1000.0);
+	printf("3.3 PU verifies an integer commitment(double commit) %lf ms \n\n",(t1-t0)*1000.0);
 	
-	// test pu.c
-	// verify the pbc commitment
 	if (bool_integer_commit6)
 	{
 		printf("integer commit successful!!\n\n");
@@ -243,13 +256,119 @@ int main (int argc, char const *argv[])
 		printf("integer commit failed!!!\n\n");
 	}
 	
+
+	/*************************************************************************/
+	/***********************  possession of signature ***********************/
+	/*************************************************************************/
+	printf("Stage4: SU proves its possession of the signature\n\n");
+	
+	// blind cignature
+	cl_signature_t blinded_pu_sig;
+	element_t blinded_A[message_len-1];
+	element_t blinded_B[message_len-1];
+	proof_knowledge_signature_t proof;
+	element_t Vxy_i[message_len-1];
+	element_t miu[message_len];
+	su_cl_blind_sig_sign_prepare(&proof,&blinded_pu_sig, &pu_sig, pairing,message_len, blinded_A,blinded_B, Vxy_i,miu);
+	t0=pbc_get_time();
+	su_cl_blind_sig_sign(&proof,&pu_pk) ;
+	t1=pbc_get_time();
+	printf("4.1 SU generates the blinded signature %lf ms \n\n",(t1-t0)*1000.0);
+	
+	t0=pbc_get_time();
+	int bool_pu_cl_blind_sig_verify =pu_cl_blind_sig_verify(&proof,&pu_pk);
+	t1=pbc_get_time();
+	printf("4.2 PU verifies the blinded signature %lf ms \n\n",(t1-t0)*1000.0);
+	if (bool_pu_cl_blind_sig_verify)
+	{
+		printf("bool_pu_cl_blind_sig_verify successful!!\n\n");
+	}
+	else
+	{
+		printf("bool_pu_cl_blind_sig_verify failed!!!\n\n");
+	}
+	
+	// multiplication
+	
+	// product
+	
+	/*
+	pbc_commitment1_t cp;
+	element_set_si(cv,12);
+	su_pbc_commit1_prepare(&cp,(pairing_ptr)pairing,cv);
+	// above should be substitude by the fee1
+	
+	pbc_commitment1_t cf1;
+	element_set_si(cv,4);
+	su_pbc_commit1_prepare(&cf1,(pairing_ptr)pairing,cv);
+	// above should be substitude by the delta_time
+	
+	pbc_commitment1_t cf2;
+	element_set_si(cv,3);
+	su_pbc_commit1_prepare(&cf2,(pairing_ptr)pairing,cv);
+	// above should be substitude by the price
+	*/
 	
 	
+	/*************************************************************************/
+	/******************************  product  ********************************/
+	/*************************************************************************/
+	printf("Stage5: SU proves the product of delta time and price is correct fee \n\n");
+	
+	proof_product_t proof_product;
+	element_printf("test unit_price %B\n\n",unit_price.value);
+	su_product_proof_prepare(&proof_product, &pu_pk, &c_fee1, &unit_price, &c_delta_t1);
+	
+	t0=pbc_get_time();
+	su_product_proof(&proof_product);
+	t1=pbc_get_time();
+	printf("5.1 SU proves the product %lf ms \n\n",(t1-t0)*1000.0);
+
+	t0=pbc_get_time();
+	int bool_pu_product_proof_verify=pu_product_proof_verify(&proof_product);
+	t1=pbc_get_time();
+	printf("5.2 PU verifies the product %lf ms \n\n",(t1-t0)*1000.0);
+	
+	if (bool_pu_product_proof_verify==1)
+	{
+		printf("bool_pu_product_proof_verify successful!!\n\n");
+	}
+	else
+	{
+		printf("bool_pu_product_proof_verify failed!!!\n\n");
+	}
+
+	
+	/*************************************************************************/
+	/******************************  total bill  ********************************/
+	/*************************************************************************/
 	// verify total bill
-	
-	
-	
-	
+    /*
+	element_t fee1,fee2,total_fee;
+    element_t ofee1,ofee2,ototal_fee;
+    element_init_Zr(fee1,pairing);
+    element_init_Zr(ofee1,pairing);
+    element_init_Zr(fee2,pairing);
+    element_init_Zr(ofee2,pairing);
+    element_init_Zr(total_fee,pairing);
+    element_init_Zr(ototal_fee,pairing);
+ 
+    element_random(fee1);
+    element_random(ofee1);
+    element_random(fee2);
+    element_random(ofee2);
+    element_add(total_fee,fee1,fee2);
+    element_add(ototal_fee,ofee1,ofee2);
+	*/
+       // commit 
+	int bool_pu_sum_fee_verify=pu_sum_fee_verify(&c_fee1,&c_fee2,&sum_fee);
+       
+	   if (bool_pu_sum_fee_verify==1){
+           printf("total fee verify pass\n\n");
+       } else {
+           printf("total fee verify failed\n\n");
+       }
+
 
 
 	return 0;

@@ -246,6 +246,7 @@ int main (int argc, char const *argv[])
 	element_printf("commitment of message  %B\n\n",commitment);
 	
 	
+	
 	// blind cignature
 	cl_signature_t blinded_pu_sig;
 	element_t blinded_A[message_len-1];
@@ -312,9 +313,7 @@ int main (int argc, char const *argv[])
 	su_product_proof_prepare(&proof_product, &pu_pk, &cp, & cf1, &cf2);
 	
 	su_product_proof(&proof_product);
-	element_printf("x2   %B\n\n",proof_product.x2);
-	element_printf("x3   %B\n\n",proof_product.x3);	
-	
+
 	int bool_pu_product_proof_verify=pu_product_proof_verify(&proof_product);
 	if (bool_pu_product_proof_verify)
 	{
