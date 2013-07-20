@@ -42,3 +42,6 @@ default: $(TARGET)
 
 clean :
 	rm -rf *.o $(TARGET) 
+	
+run :
+	./$(TARGET)

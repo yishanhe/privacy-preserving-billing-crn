@@ -106,10 +106,8 @@ int pu_product_proof_verify(proof_product_t * proof_product){
 	element_pow2_zn(left,proof_product->cp->g,proof_product->x1,proof_product->cp->h,proof_product->x2);
 	element_pow_zn(right,proof_product->cf1->commitment_value,proof_product->challenge);
 	element_mul(right,right,proof_product->R1);	
-	element_printf("right %B\n\n",right);
-	element_printf("left %B\n\n",left);
+
 	if (element_cmp(left, right)!=0) {
-		printf("fail 1\n\n");
 		result = 0;
 		goto end;
 	}
@@ -118,11 +116,9 @@ int pu_product_proof_verify(proof_product_t * proof_product){
 	element_pow_zn(right, proof_product->cp->commitment_value, proof_product->challenge);
 	element_mul(right, right, proof_product->R2);
 
-	result =!element_cmp(left, right);
-	if (result==0){
-		printf("FAILLLLLLLLED 2\n\n");
-		element_printf("right %B\n\n",right);
-		element_printf("left %B\n\n",left);
+	if (element_cmp(left, right)!=0) {
+		result = 0;
+		goto end;
 	}
 
 	end:

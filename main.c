@@ -316,7 +316,7 @@ int main (int argc, char const *argv[])
 	printf("Stage5: SU proves the product of delta time and price is correct fee \n\n");
 	
 	proof_product_t proof_product;
-	element_printf("test unit_price %B\n\n",unit_price.value);
+	//element_printf("test unit_price %B\n\n",unit_price.value);
 	su_product_proof_prepare(&proof_product, &pu_pk, &c_fee1, &unit_price, &c_delta_t1);
 	
 	t0=pbc_get_time();
@@ -342,34 +342,20 @@ int main (int argc, char const *argv[])
 	/*************************************************************************/
 	/******************************  total bill  ********************************/
 	/*************************************************************************/
-	// verify total bill
-    /*
-	element_t fee1,fee2,total_fee;
-    element_t ofee1,ofee2,ototal_fee;
-    element_init_Zr(fee1,pairing);
-    element_init_Zr(ofee1,pairing);
-    element_init_Zr(fee2,pairing);
-    element_init_Zr(ofee2,pairing);
-    element_init_Zr(total_fee,pairing);
-    element_init_Zr(ototal_fee,pairing);
- 
-    element_random(fee1);
-    element_random(ofee1);
-    element_random(fee2);
-    element_random(ofee2);
-    element_add(total_fee,fee1,fee2);
-    element_add(ototal_fee,ofee1,ofee2);
-	*/
-       // commit 
+
+	printf("Stage6: PU verifies the total fees  \n\n");
+
+    t0=pbc_get_time(); 
+
 	int bool_pu_sum_fee_verify=pu_sum_fee_verify(&c_fee1,&c_fee2,&sum_fee);
+    t1=pbc_get_time(); 
+	printf("6.1 PU verifies total fees %lf ms \n\n",(t1-t0)*1000.0);
        
-	   if (bool_pu_sum_fee_verify==1){
-           printf("total fee verify pass\n\n");
-       } else {
-           printf("total fee verify failed\n\n");
-       }
-
-
+	if (bool_pu_sum_fee_verify==1){
+		printf("total fee verify pass\n\n");
+	} else {
+		printf("total fee verify failed\n\n");
+	}
 
 	return 0;
 
