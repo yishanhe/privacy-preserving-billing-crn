@@ -23,6 +23,8 @@ int main (int argc, char const *argv[])
 	publish_modulus(n, prime1, prime2);
 	double t1=pbc_get_time();
 	printf("Pre-stage: Publish primes and modulos. %lf ms\n\n",(t1-t0)*1000.0);	
+	
+	
 	// load parameters
 	pairing_t pairing;
 	
@@ -85,7 +87,7 @@ int main (int argc, char const *argv[])
 	
 	
 
-	printf("Stage2: SU makes pbc commits towards its consumption tuple\n\n");
+	printf("Stage2: SU makes pbc commits towards its consumption tuple. \n\n");
 	
 	
 	
@@ -234,7 +236,8 @@ int main (int argc, char const *argv[])
 	// test publish prime and modulo
 	
 	// prepare
-	su_integer_commit6_prepare(&c2, value, random_value, hiding_value, generator,v,a,b,d);
+	
+	su_integer_commit6_prepare(&c2, value, random_value, hiding_value, generator,v,a,b,d,n,prime1,prime2);
 	
 	t0=pbc_get_time();
 	su_integer_commit6(&c2);

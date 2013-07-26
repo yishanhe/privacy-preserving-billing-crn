@@ -229,8 +229,7 @@ void pu_cl_key_gen (cl_pk_t * pu_pk, cl_sk_t * pu_sk, element_t * message,int me
 	pu_sk->len = message_len;
 	pu_sk->z=z;
 	pu_pk->Z=Z;		
-	// initial private key
-	// @TODO 有一些时间不用算进来 比如初始化的 生成generator的
+	// initial private key 
 	element_init_Zr(pu_sk->x,pairing);
 	element_random(pu_sk->x);
 	element_init_Zr(pu_sk->y,pairing);

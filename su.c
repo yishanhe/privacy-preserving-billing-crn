@@ -410,6 +410,37 @@ end:
 
 void su_integer_commit6(integer_commitment_t *c){
 	
+	//
+	// delta
+    // delta = 4*r_v
+	mpz_t delta;
+	mpz_init(delta);
+	mpz_t delta_tmp;
+	mpz_init(delta_tmp);
+    mpz_mul_ui(delta,*(c->random_value),4);
+    //delta = 4*r_v-2*a*r_a
+    mpz_mul(delta_tmp,*(c->value+1),*(c->random_value+1));
+    mpz_submul_ui(delta,delta_tmp,2); 
+    //delta = 4*r_v-2*a*r_a-2*b*r_b
+    mpz_mul(delta_tmp,*(c->value+2),*(c->random_value+2));
+    mpz_submul_ui(delta,delta_tmp,2); 
+    //delta = 4*r_v-2*a*r_a-2*b*r_b-2*d*r_d
+    mpz_mul(delta_tmp,*(c->value+3),*(c->random_value+3));
+    mpz_submul_ui(delta,delta_tmp,2);
+    mpz_set(*(c->value+4),delta);
+	// r_delta = - ra^2 -rb^2 -rc^2
+    mpz_pow_ui(delta_tmp,*(c->random_value+1),2);
+    mpz_neg(delta,delta_tmp);
+    mpz_submul(delta,*(c->random_value+2),*(c->random_value+2));
+    mpz_submul(delta,*(c->random_value+3),*(c->random_value+3));
+	mpz_set(*(c->random_value+4),delta);
+	//free
+	mpz_clear(delta_tmp);
+	mpz_clear(delta);
+	
+
+	
+	
 	// calculate commitment values
 	
 	// 1 E(v,R) v_commit
@@ -473,9 +504,51 @@ void su_integer_commit6(integer_commitment_t *c){
 	mpz_clear(integer_commit6_tmp1);
 	mpz_clear(integer_commit6_tmp2);
 	
+	// get hash 
+		// change commit to char *
+    char * char_integer_commitment_value = mpz_get_str (NULL, 16, c->integer_commitment_value);
+    char * char_integer_commitment_random_value = mpz_get_str (NULL, 16, c->integer_commitment_random_value);
+    char * char_v_commitment_value = mpz_get_str (NULL, 16, c->v_commitment_value);
+    char * char_v_commitment_random_value = mpz_get_str (NULL, 16, c->v_commitment_random_value);
+	//char * dest = (char *)malloc((strlen(c->integer_commitment_value)+strlen(c->integer_commitment_random_value)+strlen(c->v_commitment_value)+strlen(c->v_commitment_random_value)+1)*sizeof(char));
+	char * dest = (char *)malloc((strlen(char_integer_commitment_value)+strlen(char_integer_commitment_random_value)+strlen(char_v_commitment_value)+strlen(char_v_commitment_random_value)+1)*sizeof(char));
+	strcat(dest,char_integer_commitment_value);
+	strcat(dest,char_integer_commitment_random_value);
+	strcat(dest,char_v_commitment_value);
+	strcat(dest,char_v_commitment_random_value);
+    static char buffer[65];
+    sha256(dest, buffer);
+	mpz_set_str(c->challenge,buffer,16);
+	gmp_printf("the hash challenge is %Zd\n\n",c->challenge);
+	// @TODO
+	
+	// hiding value
+	
+	mpz_t deltah_tmp; mpz_init(deltah_tmp);
+	
+	// calculate hiding value
+	for(i = 0; i < c->len; i++) {
+		if (i!=4) {
+			mpz_set(*(c->hiding_value+i), *(c->random_value+i));
+			mpz_addmul (*(c->hiding_value+i ), c->challenge, *(c->value+i));
+		} else {
+			// calculate special hiding_delta
+		    mpz_set(deltah_tmp,c->challenge);
+		    mpz_addmul_ui(deltah_tmp,*(c->hiding_value),4);
+		    mpz_mul(deltah_tmp,deltah_tmp,c->challenge);
+		    mpz_submul(deltah_tmp,*(c->hiding_value+1),*(c->hiding_value+1));
+		    mpz_submul(deltah_tmp,*(c->hiding_value+2),*(c->hiding_value+2));
+		    mpz_submul(deltah_tmp,*(c->hiding_value+3),*(c->hiding_value+3));
+		    mpz_set(*(c->hiding_value+i),deltah_tmp);
+		}
+
+	}
+	mpz_clear(deltah_tmp); 
+	 
+	
 }
 
-void su_integer_commit6_prepare(integer_commitment_t *c, mpz_t *value, mpz_t *random_value, mpz_t *hiding_value, mpz_t *generator,mpz_t v,mpz_t a,mpz_t b,mpz_t d){
+void su_integer_commit6_prepare(integer_commitment_t *c, mpz_t *value, mpz_t *random_value, mpz_t *hiding_value, mpz_t *generator,mpz_t v,mpz_t a,mpz_t b,mpz_t d, mpz_t n, mpz_t prime1, mpz_t prime2){
 	/*
 typedef struct  {
 -	int len; // 7 0-6
@@ -518,17 +591,18 @@ typedef struct  {
 	mp_bitcnt_t lrr = lr + le + ls;
 	mp_bitcnt_t rand_len[]={l,l,l,l,lr,lrr,lrr};
 	// lr+le+ls
-	//printf("123");
+	
+	
 	// random challenge
 	// @TODO generate hash challenge value
 	mpz_init(c->challenge);
-	mpz_rand_bitlen(c->challenge,le);
+	//mpz_rand_bitlen(c->challenge,le);
 	//gmp_printf("hash value %Zd\n\n",(c->challenge));
 	// initial
-	mpz_init(c->n);
-	mpz_init(c->prime1);
-	mpz_init(c->prime2);
-	publish_modulus(c->n, c->prime1, c->prime2);
+	mpz_init_set(c->n,n);
+	mpz_init_set(c->prime1,prime1);
+	mpz_init_set(c->prime2,prime2);
+	//publish_modulus(c->n, c->prime1, c->prime2);
 	
 	// initial
 	c->len = 7;
@@ -554,14 +628,9 @@ typedef struct  {
 		// gmp_printf("generator %d %Zd\n\n",i,*(c->generator+i));
 		mpz_rand_bitlen(*(c->random_value+i),rand_len[i]); // random value
 		
-		
-		// calculate hiding value
-		//gmp_printf("random value %d %Zd\n\n",i,*(c->random_value+i));
+
 	}
-//	gmp_printf("after %Zd\n\n",c->value+1);
-//	mpz_set_si(c->value+1,123);
-//	gmp_printf("after %Zd\n\n",c->value+1);
-	//gmp_printf("generator %Zd\n\n",c->generator+1);
+
 	
 	mpz_set(*(c->value),v);
 	mpz_set(*(c->value+1),a);
@@ -571,7 +640,7 @@ typedef struct  {
 	mpz_rand_bitlen(*(c->value+5),lr); 
 	mpz_rand_bitlen(*(c->value+6),lr); 
 
-	
+	/*
 	// delta
     // delta = 4*r_v
 	mpz_t delta;
@@ -598,8 +667,12 @@ typedef struct  {
 	//free
 	mpz_clear(delta_tmp);
 	mpz_clear(delta);
+	*/
 	
+	
+	/*
 	mpz_t deltah_tmp; mpz_init(deltah_tmp);
+	
 	// calculate hiding value
 	for(i = 0; i < c->len; i++) {
 		if (i!=4) {
@@ -618,7 +691,7 @@ typedef struct  {
 
 	}
 	mpz_clear(deltah_tmp);
-		
+	*/	
 	
 }
 
@@ -645,6 +718,7 @@ void su_pbc_commit1_prepare(pbc_commitment1_t *c, pairing_ptr pairing, element_t
     element_random(c->opening_value);
     element_random(c->random_opening_value);
    // element_random(c->challenge); // random challenge, test for real challenge generator later
+	//@TODO generate the hash value in the commmit function
     element_set_si(c->challenge,3);
 	// set hiding value xh = x*e + xr
 	element_mul(c->hiding_value,c->challenge,c->value);

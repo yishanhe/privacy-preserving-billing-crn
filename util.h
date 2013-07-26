@@ -152,6 +152,8 @@ void get_random_qr_n(mpz_t qr_generator,mpz_t prime1, mpz_t prime2, mpz_t n);
 void get_element_rand_zn(mpz_t element, mpz_t n);
 void mpz_rand_bitlen(mpz_t rand_num,unsigned long int bitlen);
 void get_cl_commitment(cl_pk_t * pu_pk, element_t message[],element_t commitment);
+void sha256(char *string, char outputBuffer[65]);
+
 
 /* decomposite a value to the sum of three squares */
 void decompose_prime(mpz_t a, mpz_t b, mpz_t p);
@@ -163,7 +165,7 @@ void sum_of_squares(mpz_t a, mpz_t b, mpz_t d, mpz_t p);
 // pbc commit
 void su_pbc_commit1_prepare(pbc_commitment1_t *c, pairing_ptr pairing, element_t value);
 // integer commit
-void su_integer_commit6_prepare(integer_commitment_t *c, mpz_t *value, mpz_t *random_value, mpz_t *hiding_value, mpz_t *generator,mpz_t v,mpz_t a,mpz_t b,mpz_t d);
+void su_integer_commit6_prepare(integer_commitment_t *c, mpz_t *value, mpz_t *random_value, mpz_t *hiding_value, mpz_t *generator,mpz_t v,mpz_t a,mpz_t b,mpz_t d, mpz_t n, mpz_t prime1, mpz_t prime2);
 void su_integer_commit6(integer_commitment_t *c);
 int su_cl_sig_verify(cl_pk_t *pu_pk, cl_sk_t *pu_sk,cl_signature_t *pu_sig, element_t message[]);
 void su_cl_blind_sig_sign_prepare(proof_knowledge_signature_t * proof, cl_signature_t * blinded_pu_sig, cl_signature_t * pu_sig, pairing_ptr pairing, int message_len, element_t * blinded_A, element_t * blinded_B, element_t * Vxy_i,element_t * miu);

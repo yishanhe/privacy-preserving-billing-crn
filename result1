@@ -1,0 +1,56 @@
+Pre-stage: Publish primes and modulos. 308.170000 ms
+
+Stage1: PU sign the policy with CL singature
+
+1.1 PU generates the keys 36.987000 ms 
+
+1.2 PU signs a single policy 23.717000 ms 
+
+1.3 SU verifies a single policy 19.656000 ms 
+
+policy signature verify successful!!
+
+Stage2: SU makes pbc commits towards its consumption tuple
+
+2.1 Integer commit a tuple of [t,delta_t,fee]_i (three commitments) 15.423000 ms 
+
+2.2 Integer commit total fee time consume(single commitments) 5.239000 ms 
+
+2.3 Verify a tuple of commmitment[t,delta_t,fee]_i 8.519000 ms 
+
+2.4 Verify a total fee 2.851000 ms 
+
+policy verify successful!!
+
+Stage3: SU makes integer commits and prove the interval checking
+
+3.1 SU decomposites the value to sum of three squares 0.038000 ms 
+
+3.2 SU generates an integer commitment(double commit) 36.052000 ms 
+
+3.3 PU verifies an integer commitment(double commit) 19.687000 ms 
+
+integer commit successful!!
+
+Stage4: SU proves its possession of the signature
+
+4.1 SU generates the blinded signature 23.284000 ms 
+
+4.2 PU verifies the blinded signature 12.937000 ms 
+
+bool_pu_cl_blind_sig_verify successful!!
+
+Stage5: SU proves the product of delta time and price is correct fee 
+
+5.1 SU proves the product 5.470000 ms 
+
+5.2 PU verifies the product 5.533000 ms 
+
+bool_pu_product_proof_verify successful!!
+
+Stage6: PU verifies the total fees  
+
+6.1 PU verifies total fees 0.012000 ms 
+
+total fee verify pass
+
