@@ -19,5 +19,6 @@ demo
 test
 
 .DS_Store
+*.asv
 
 
