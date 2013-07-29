@@ -58,3 +58,7 @@ prove_product_time = [4.986 4.686 4.821 4.781 4.782 4.737 4.651 4.684 4.702 4.84
 verify_product_time = [4.931 4.653 4.806 4.615 4.828 4.706 4.634 4.791 4.765 4.773];
 mean_prove_product_time = mean(prove_product_time)
 mean_verify_product_time = mean(verify_product_time)
+
+%% total time mean
+% total_time_result = [];
+% mean_total_time_result = mean(total_time_result)
